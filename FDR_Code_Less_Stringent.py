@@ -1,4 +1,8 @@
-#Python Code to Create An Adjusted P-Value
+#!/usr/bin/python3.6
+
+# Python Code to Create An Adjusted P-Value
+# Note with duplicate values this code returns the lowest p-value for both
+# duplicate values
 
 #Original Example values for Benjamini-Hochberg 1995 Paper
 p_values=[0.0001, 0.0004, 0.0019, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
@@ -32,3 +36,4 @@ def main():
    #Note any p-value (values <0.05 are significant)---4 value in dictionary list
 
 main()
+
