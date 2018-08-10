@@ -1,7 +1,7 @@
 #!/usr/bin/python3.6
 
 # Python Code to Create An Adjusted P-Value
-# Note with duplicate values this code returns the lowest p-value for both
+# Note with duplicate values this code returns the same lowest p-value for both
 # duplicate values
 
 #Original Example values for Benjamini-Hochberg 1995 Paper
