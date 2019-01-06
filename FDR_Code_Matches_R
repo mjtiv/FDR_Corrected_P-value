@@ -98,19 +98,15 @@ def fdr_correction(pvalues_list):
     Function performs FDR correction of the p-values
     using Benjamini-Hochberg (1995) which sorts the list of pvalues
     and then determines the p-value correction based on the rank and following
-    equation (p-value x NumbTest / p-value_Rank)
+    equation (p-value x NumbTest / p-value_Rank) and also adjusts for lower p-value 
+    in succeeding adjusted p-value in list if it occurs.
 
     :param values: list of pvalues to correct
 
     :return p_value_dict: dictionary of corrected pvalues
     
     """
-
-    #### Create a dictionary of indexes for future printing
-    ### loop over list of lists create new values + adjusting for lower pvlaue
-    ### add to index dictionary and move on
-    ### just like R now YEAH!!!!!
-
+    
     # Create a list of pvalues with a dictionary inside each entry
     pvalues_list_dict = create_pvalues_fdr_results_dict(pvalues_list)
 
