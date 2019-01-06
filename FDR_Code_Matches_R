@@ -118,12 +118,8 @@ def fdr_correction(pvalues_list):
 
     total_pvalues = len(pvalues_list_dict)
 
-    print (total_pvalues)
-
     # Start looping over list dictionary 
     for entry in sorted_pvalues_list_dict:
-
-        print (i)
 
         if i < len(pvalues_list_dict):
 
