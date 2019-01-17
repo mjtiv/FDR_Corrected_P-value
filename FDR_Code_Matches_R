@@ -14,7 +14,10 @@ DESCRIPTION
 Program implements the p-value adjustment for controlling false discovery rates
 outlined in the paper by Benjamini-Hochberg (1995).
 
-NOTES
+NOTES:
+
+Code was slightly updaed on (1/16/2019) to address if duplicates are found in the list
+which created problems with sorting (bug solved).
 
 Code was recently updated (12/23/2018) and produces results similar to the R code
 for p-value adjustment using BH technique (see end of code for R code for benchmarking).
@@ -26,6 +29,7 @@ the sorted p-value list actually resulted in a lower p-value after correction.
 
 def create_pvalues_fdr_results_dict(pvalues_list):
 
+
     '''
 
     Creates a dictionary inside a list to allow corrected
@@ -35,7 +39,7 @@ def create_pvalues_fdr_results_dict(pvalues_list):
     : parameters pvalues_list: list of input pvalues
 
     : return pvalues_fdr_results_list: list dictionary where the list
-        value is the original p-value
+        value is the original p-value, followed index value then dictionary
 
     '''
 
@@ -49,14 +53,15 @@ def create_pvalues_fdr_results_dict(pvalues_list):
     for pvalue in pvalues_list:
 
         # For each entry add a value as an outside list with a dictionary inside
-        # Allow sorting of the outside value
-        pvalues_list_dict.append([pvalue, {'index_in_list': x,
+        # Allow sorting of the outside value, very important
+        pvalues_list_dict.append([pvalue, x, {'index_in_list': x,
                                                'original_pvalue': pvalue,
                                                'corrected_pvalue': 'nan'}])
         # Add to the index counter
         x += 1
 
     return (pvalues_list_dict)
+
 
 
 
@@ -78,11 +83,12 @@ def reorder_sorted_pvalues_list_dict(sorted_pvalues_list_dict):
 
     """
 
+    # Loop over all the entries in the list dictionary
     for entry in sorted_pvalues_list_dict:
 
-        index_value = entry[1]['index_in_list']
-
-        entry[0] = index_value
+        # Delete the first entry in the list
+        # To get to the original index value
+        del entry[0]
 
     # Sort the list (outside value using original index value)
     re_sorted_pvalues_list_dict = sorted(sorted_pvalues_list_dict)
@@ -98,15 +104,19 @@ def fdr_correction(pvalues_list):
     Function performs FDR correction of the p-values
     using Benjamini-Hochberg (1995) which sorts the list of pvalues
     and then determines the p-value correction based on the rank and following
-    equation (p-value x NumbTest / p-value_Rank) and also adjusts for lower p-value 
-    in succeeding adjusted p-value in list if it occurs.
+    equation (p-value x NumbTest / p-value_Rank)
 
     :param values: list of pvalues to correct
 
     :return p_value_dict: dictionary of corrected pvalues
     
     """
-    
+
+    #### Create a dictionary of indexes for future printing
+    ### loop over list of lists create new values + adjusting for lower pvlaue
+    ### add to index dictionary and move on
+    ### just like R now YEAH!!!!!
+
     # Create a list of pvalues with a dictionary inside each entry
     pvalues_list_dict = create_pvalues_fdr_results_dict(pvalues_list)
 
@@ -118,9 +128,12 @@ def fdr_correction(pvalues_list):
 
     total_pvalues = len(pvalues_list_dict)
 
+    print (total_pvalues)
+
     # Start looping over list dictionary 
     for entry in sorted_pvalues_list_dict:
 
+        # Loop over all the values except last value
         if i < len(pvalues_list_dict):
 
             # Get corrected pvalue for position i
@@ -139,9 +152,9 @@ def fdr_correction(pvalues_list):
             fdr_corrected_pvalue = min(adj_pvalue, next_entry_adj_pvalue)
 
             # Update the dictionary value with corrected pvalue
-            entry[1]['corrected_pvalue'] = fdr_corrected_pvalue
+            entry[2]['corrected_pvalue'] = fdr_corrected_pvalue
 
-        # last value in list
+        # Last value in list (no need for following calculation)
         else:
  
             # Get corrected pvalue for position i
@@ -149,7 +162,7 @@ def fdr_correction(pvalues_list):
             fdr_corrected_pvalue = round((entry[0] * total_pvalues / i), 8)
 
             # Update the dictionary value with corrected pvalue
-            entry[1]['corrected_pvalue'] = fdr_corrected_pvalue
+            entry[2]['corrected_pvalue'] = fdr_corrected_pvalue
 
     # Replace first value in list with index to re-order values to match orginal data
     re_sorted_pvalues_list_dict = reorder_sorted_pvalues_list_dict(sorted_pvalues_list_dict)
@@ -162,7 +175,11 @@ def main():
     
     # List of pvalue used (Values come from the Benjamini-Hochberg (1995) Paper 
     pvalues_list = [0.0001, 0.0004, 0.0019, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
-          0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 1.000]
+         0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 1.000]
+
+    # List of pvalue used (Duplicate built in to test robustness of code--- crashed initial version)
+    #pvalues_list = [0.0001, 0.0004, 0.0019, 0.0095, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
+    #      0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 1.000]
 
     # Perform FDR Correction on list
     re_sorted_pvalues_list_dict = fdr_correction(pvalues_list)
@@ -197,10 +214,6 @@ Output:
 [11] 0.58118182 0.71487500 0.75323077 0.81321429 1.00000000
 
 """
-
-
-
-
 
 
 
