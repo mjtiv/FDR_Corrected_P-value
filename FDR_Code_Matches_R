@@ -1,6 +1,8 @@
 #!/usr/bin/python3.6
+import sys
 
 """
+
 PROGRAM 
 
 Implementing Benjamini-Hochberg's FDR P-value Ajustment for Multiple Testing
@@ -15,6 +17,9 @@ Program implements the p-value adjustment for controlling false discovery rates
 outlined in the paper by Benjamini-Hochberg (1995).
 
 NOTES:
+Code was updated on (1/19/2019) to address issue with passing more significant adj-pvalues
+up the list if the above adj-pvalues were less significant. Also fixed bug in code where
+adj-pvalues >1 should become 1. 
 
 Code was slightly updaed on (1/16/2019) to address if duplicates are found in the list
 which created problems with sorting (bug solved).
@@ -56,7 +61,7 @@ def create_pvalues_fdr_results_dict(pvalues_list):
         # Allow sorting of the outside value, very important
         pvalues_list_dict.append([pvalue, x, {'index_in_list': x,
                                                'original_pvalue': pvalue,
-                                               'corrected_pvalue': 'nan'}])
+                                               'adjusted_pvalue': 'nan'}])
         # Add to the index counter
         x += 1
 
@@ -70,7 +75,7 @@ def reorder_sorted_pvalues_list_dict(sorted_pvalues_list_dict):
     """
 
     Takes in the final list-dictionary with corrected p-values
-    and replaces pvalue "list" vlue with the original list index value
+    and replaces pvalue "list" value with the original list index value
     so the list-dictionary can be re-sorted to match the original list
     order.
 
@@ -120,52 +125,67 @@ def fdr_correction(pvalues_list):
     # Create a list of pvalues with a dictionary inside each entry
     pvalues_list_dict = create_pvalues_fdr_results_dict(pvalues_list)
 
-    # Sort the list (outside value used raw pvalue)
-    sorted_pvalues_list_dict = sorted(pvalues_list_dict)
-    
-    #Position Movement Counter
-    i=1
+    # Sort the list in Reverse (outside value uses raw pvalue)
+    # if a duplicate is found, goes to next value (aka index value),
+    # index value required to prevent sort from breaking
+    reverse_sorted_pvalues_list_dict = sorted(pvalues_list_dict, reverse=True)
 
+    #Position Movement Counter
+    i = 0
+
+    # Get the total number of pvalues analyzed
     total_pvalues = len(pvalues_list_dict)
 
-    print (total_pvalues)
-
     # Start looping over list dictionary 
-    for entry in sorted_pvalues_list_dict:
+    for entry in reverse_sorted_pvalues_list_dict:
 
-        # Loop over all the values except last value
-        if i < len(pvalues_list_dict):
+        # Get the sorted position of p-value (most significant to least significant),
+        # opposite the current list
+        p_value_sorted_position = total_pvalues - i
 
-            # Get corrected pvalue for position i
-            adj_pvalue = round((entry[0] * total_pvalues / i), 8)
+        # Last value in list (no need for following calculation)
+        if i == 0:
             
-            # Get next pvalue in sorted list
-            next_entry = sorted_pvalues_list_dict[i][0]
+            # Get corrected pvalue for position i
+            # Important: No correction occurs for position because last value in sorted list
+            fdr_adj_pvalue = round((entry[0] * total_pvalues / p_value_sorted_position), 8)
 
-            # Get corrected pvalue for next entry
-            next_entry_adj_pvalue = round((next_entry * total_pvalues / (i + 1)), 8)
+            # If adjusted pvalue greater than 1 --- replace with just 1
+            if fdr_adj_pvalue > 1:
+                fdr_adj_pvalue = 1
+
+            # Update the dictionary value with corrected pvalue
+            entry[2]['adjusted_pvalue'] = fdr_adj_pvalue
 
             # Increment i value
             i+=1
 
-            # Get the lowest possible value of the two options
-            fdr_corrected_pvalue = min(adj_pvalue, next_entry_adj_pvalue)
-
-            # Update the dictionary value with corrected pvalue
-            entry[2]['corrected_pvalue'] = fdr_corrected_pvalue
-
-        # Last value in list (no need for following calculation)
         else:
- 
-            # Get corrected pvalue for position i
-            # Important: No correction occurs for position because last value in sorted list
-            fdr_corrected_pvalue = round((entry[0] * total_pvalues / i), 8)
+            
+            # Get corrected pvalue for current entry
+            fdr_adj_pvalue = round((entry[0] * total_pvalues / p_value_sorted_position), 8)
+
+            # Get pvalue for the prior entry, which has a less significant original pvalue, which after
+            # adjustment could be more significant and needs to replace the adjusted pvalue
+            # of the current entry if this occurs
+            prior_entry_adj_pvalue = reverse_sorted_pvalues_list_dict[i -1][2]['adjusted_pvalue']
+
+            # Correct adjusted pvalue if lower ranked pvalue is more signficant
+            if prior_entry_adj_pvalue < fdr_adj_pvalue:
+                fdr_adj_pvalue = prior_entry_adj_pvalue
+
+            # If adjusted pvalue greater than 1 --- replace with just 1
+            if fdr_adj_pvalue > 1:
+                fdr_adj_pvalue = 1
 
             # Update the dictionary value with corrected pvalue
-            entry[2]['corrected_pvalue'] = fdr_corrected_pvalue
+            entry[2]['adjusted_pvalue'] = fdr_adj_pvalue
+
+            # Increment i value
+            i+=1
 
     # Replace first value in list with index to re-order values to match orginal data
-    re_sorted_pvalues_list_dict = reorder_sorted_pvalues_list_dict(sorted_pvalues_list_dict)
+    re_sorted_pvalues_list_dict = reorder_sorted_pvalues_list_dict(reverse_sorted_pvalues_list_dict)
 
     return(re_sorted_pvalues_list_dict)
     
@@ -177,16 +197,20 @@ def main():
     pvalues_list = [0.0001, 0.0004, 0.0019, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
          0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 1.000]
 
-    # List of pvalue used (Duplicate built in to test robustness of code--- crashed initial version)
-    #pvalues_list = [0.0001, 0.0004, 0.0019, 0.0095, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
-    #      0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 1.000]
+    # List of pvalue used (Duplicate built in to test robustness of code because in prior
+    # version crashed the sorting, also added a value >1 to see if code properly limited result
+    # to 1, also scrambled order of two values
+    #pvalues_list = [1.000, 0.0004, 0.0019, 0.0095, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
+    #      0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 0.0001, 1.1]
 
+    
     # Perform FDR Correction on list
     re_sorted_pvalues_list_dict = fdr_correction(pvalues_list)
 
     # Print FDR correction results
     for entry in re_sorted_pvalues_list_dict:
-        print (str(entry[0]) + ":" + str(entry[1]['original_pvalue']) + ":" + str(entry[1]['corrected_pvalue']))
+        print (str(entry[0]) + ":" + str(entry[1]['original_pvalue']) + ":" + str(entry[1]['adjusted_pvalue']))
+    
 
 if __name__ == "__main__":
     
@@ -214,6 +238,10 @@ Output:
 [11] 0.58118182 0.71487500 0.75323077 0.81321429 1.00000000
 
 """
+
+
+
+
 
 
 
