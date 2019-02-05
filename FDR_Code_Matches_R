@@ -17,9 +17,10 @@ Program implements the p-value adjustment for controlling false discovery rates
 outlined in the paper by Benjamini-Hochberg (1995).
 
 NOTES:
+Fixed a prior feature that was not needed and edited test datasets (2/4/2019).
+
 Code was updated on (1/19/2019) to address issue with passing more significant adj-pvalues
-up the list if the above adj-pvalues were less significant. Also fixed bug in code where
-adj-pvalues >1 should become 1. 
+up the list if the above adj-pvalues were less significant. 
 
 Code was slightly updaed on (1/16/2019) to address if duplicates are found in the list
 which created problems with sorting (bug solved).
@@ -150,10 +151,6 @@ def fdr_correction(pvalues_list):
             # Important: No correction occurs for position because last value in sorted list
             fdr_adj_pvalue = round((entry[0] * total_pvalues / p_value_sorted_position), 8)
 
-            # If adjusted pvalue greater than 1 --- replace with just 1
-            if fdr_adj_pvalue > 1:
-                fdr_adj_pvalue = 1
-
             # Update the dictionary value with corrected pvalue
             entry[2]['adjusted_pvalue'] = fdr_adj_pvalue
 
@@ -174,10 +171,6 @@ def fdr_correction(pvalues_list):
             if prior_entry_adj_pvalue < fdr_adj_pvalue:
                 fdr_adj_pvalue = prior_entry_adj_pvalue
 
-            # If adjusted pvalue greater than 1 --- replace with just 1
-            if fdr_adj_pvalue > 1:
-                fdr_adj_pvalue = 1
-
             # Update the dictionary value with corrected pvalue
             entry[2]['adjusted_pvalue'] = fdr_adj_pvalue
 
@@ -194,14 +187,14 @@ def fdr_correction(pvalues_list):
 def main():
     
     # List of pvalue used (Values come from the Benjamini-Hochberg (1995) Paper 
-    pvalues_list = [0.0001, 0.0004, 0.0019, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
-         0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 1.000]
+    #pvalues_list = [0.0001, 0.0004, 0.0019, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
+    #     0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 1.000]
 
     # List of pvalue used (Duplicate built in to test robustness of code because in prior
     # version crashed the sorting, also added a value >1 to see if code properly limited result
     # to 1, also scrambled order of two values
-    #pvalues_list = [1.000, 0.0004, 0.0019, 0.0095, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
-    #      0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 0.0001, 1.1]
+    pvalues_list = [1.000, 0.0004, 0.0019, 0.0095, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
+          0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 0.0001]
 
     
     # Perform FDR Correction on list
