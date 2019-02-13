@@ -117,12 +117,7 @@ def fdr_correction(pvalues_list):
     :return p_value_dict: dictionary of corrected pvalues
     
     """
-
-    #### Create a dictionary of indexes for future printing
-    ### loop over list of lists create new values + adjusting for lower pvlaue
-    ### add to index dictionary and move on
-    ### just like R now YEAH!!!!!
-
+    
     # Create a list of pvalues with a dictionary inside each entry
     pvalues_list_dict = create_pvalues_fdr_results_dict(pvalues_list)
 
