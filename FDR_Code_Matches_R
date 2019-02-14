@@ -17,10 +17,9 @@ Program implements the p-value adjustment for controlling false discovery rates
 outlined in the paper by Benjamini-Hochberg (1995).
 
 NOTES:
-Fixed a prior feature that was not needed and edited test datasets (2/4/2019).
-
 Code was updated on (1/19/2019) to address issue with passing more significant adj-pvalues
-up the list if the above adj-pvalues were less significant. 
+up the list if the above adj-pvalues were less significant. Also fixed bug in code where
+adj-pvalues >1 should become 1. 
 
 Code was slightly updaed on (1/16/2019) to address if duplicates are found in the list
 which created problems with sorting (bug solved).
@@ -117,7 +116,7 @@ def fdr_correction(pvalues_list):
     :return p_value_dict: dictionary of corrected pvalues
     
     """
-    
+
     # Create a list of pvalues with a dictionary inside each entry
     pvalues_list_dict = create_pvalues_fdr_results_dict(pvalues_list)
 
@@ -145,6 +144,10 @@ def fdr_correction(pvalues_list):
             # Get corrected pvalue for position i
             # Important: No correction occurs for position because last value in sorted list
             fdr_adj_pvalue = round((entry[0] * total_pvalues / p_value_sorted_position), 8)
+
+            # Adjust p-values may be greater than 1
+            if fdr_adj_pvalue > 1:
+                fdr_adj_pvalue = 1
 
             # Update the dictionary value with corrected pvalue
             entry[2]['adjusted_pvalue'] = fdr_adj_pvalue
