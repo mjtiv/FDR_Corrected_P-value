@@ -191,8 +191,8 @@ def main():
     # List of pvalue used (Duplicate built in to test robustness of code because in prior
     # version crashed the sorting, also added a value >1 to see if code properly limited result
     # to 1, also scrambled order of two values
-    pvalues_list = [1.000, 0.0004, 0.0019, 0.0095, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
-          0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 0.0001]
+    #pvalues_list = [1.000, 0.0004, 0.0019, 0.0095, 0.0095, 0.0201, 0.0278, 0.0298, 0.0344,
+    #      0.0459, 0.3240, 0.4262, 0.5719, 0.6528, 0.7590, 0.0001]
 
     
     # Perform FDR Correction on list
@@ -229,10 +229,4 @@ Output:
 [11] 0.58118182 0.71487500 0.75323077 0.81321429 1.00000000
 
 """
-
-
-
-
-
-
 
